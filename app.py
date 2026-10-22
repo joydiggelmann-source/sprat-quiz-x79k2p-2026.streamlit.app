@@ -12,7 +12,6 @@ EXCEL_FILE = "RAWT ENG-GER Final.xlsx"
 @st.cache_data
 def load_data():
     if os.path.exists(EXCEL_FILE):
-        # header=4 liest ab Zeile 5 (wo die Spaltennamen ex, Seilzugang, Ebene etc. stehen)
         df = pd.read_excel(EXCEL_FILE, header=4)
         df.columns = df.columns.astype(str).str.strip()
         return df
@@ -32,22 +31,22 @@ if df is not None:
         (df[q_col].astype(str).str.strip() != "Seilzugang")
     ].copy()
 
-    # 2. FILTER-LOGIK BASIEREND AUF DER SPALTE 'Ebene'
+    # 2. ISOLIERTE LEVEL-FILTERUNG
     ebene_str = df['Ebene'].astype(str).str.upper() if 'Ebene' in df.columns else pd.Series([""] * len(df), index=df.index)
 
     if level_selected == 1:
-        # Nur Fragen für Stufe 1 ("25L1" und "25ALLE")
-        cond = ebene_str.str.contains("L1|ALLE", na=False)
+        # Nur Stufe 1 (25L1 oder 25ALLE)
+        cond = ebene_str.str.contains("L1|ALLE", na=False) & ~ebene_str.str.contains("L2|L3", na=False)
         filtered_df = df[cond]
 
     elif level_selected == 2:
-        # Fragen für Stufe 1 und Stufe 2 ("25L1", "25L2" und "25ALLE")
-        cond = ebene_str.str.contains("L1|L2|ALLE", na=False)
+        # Nur reine Stufe 2 Fragen (25L2)
+        cond = ebene_str.str.contains("L2", na=False)
         filtered_df = df[cond]
 
     else:
-        # Stufe 3: Alle gültigen Fragen ("25L1", "25L2", "25L3" und "25ALLE")
-        cond = ebene_str.str.contains("L1|L2|L3|ALLE", na=False)
+        # Nur reine Stufe 3 Fragen (25L3)
+        cond = ebene_str.str.contains("L3", na=False)
         filtered_df = df[cond]
 
     # Session State initialisieren
